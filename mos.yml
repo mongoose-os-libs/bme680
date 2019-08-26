@@ -1,0 +1,51 @@
+type: lib
+description: BME680 driver and BSEC sensor library
+version: 1.0.0
+platforms: [ esp8266, esp32 ]  # TODO: ARM platforms support
+
+sources:
+  - src
+  - BSEC_1.4.7.4_Generic_Release/API
+
+includes:
+  - include
+  - BSEC_1.4.7.4_Generic_Release/algo/normal_version/inc
+
+libs:
+  - origin: https://github.com/mongoose-os-libs/i2c
+
+config_schema:
+  - ["bme680", "o", {"title": "BME680 sensor settings"}]
+  - ["bme680.enable", "b", false, {"title": "Enable the sensor"}]
+  - ["bme680.i2c_bus", "i", 0, {"title": "I2C bus number"}]
+  - ["bme680.i2c_addr", "i", 0x76, {"title": "I2C device address, 0x76 (primary) or 0x77 (secondary)"}]
+  - ["bme680.bsec", "o", {"title": "BSEC library settings"}]
+  - ["bme680.bsec.enable", "b", true, {"title": "Enable the BSEC library for accurate measurements"}]
+  - ["bme680.bsec.config_file", "s", "bsec_iaq.config", {"title": "BSEC library configuration file name. Binary configuration files from the BSEC library distribution are used. Copy the appropriate file to your app's fs directory."}]
+  - ["bme680.bsec.state_file", "s", "bsec.state", {"title": "BSEC state file, stores BSEC library state."}]
+  - ["bme680.bsec.state_save_interval", "i", 300, {"title": "Save BSEC library state to file at this interval (seconds)."}]
+  - ["bme680.bsec.use_wall_time", "b", false, {"title": "Use wall time for time stamps, otherwise use uptime."}]
+  # Simplified sensor subscription configuration.
+  # If either is set, then relevant sensor outputs are requested with the specified rate.
+  # If both are not set, then user will need to configure subscription with bsec_update_subscription()
+  # and start data collection with mgos_bsec_start().
+  - ["bme680.bsec.iaq_sample_rate", "s", "LP", {"title": "Air quality sample rate; empty = disabled, LP = 3s, ULP = 300s"}]
+  - ["bme680.bsec.temp_sample_rate", "s", "LP", {"title": "Temperature sample rate; empty = disabled, LP = 3s, ULP = 300s"}]
+  - ["bme680.bsec.rh_sample_rate", "s", "LP", {"title": "Humidity sample rate; empty = disabled, LP = 3s, ULP = 300s"}]
+  - ["bme680.bsec.ps_sample_rate", "s", "LP", {"title": "Pressure sample rate; empty = disabled, LP = 3s, ULP = 300s"}]
+  - ["bme680.bsec.iaq_auto_cal", "b", true, {"title": "Automatically calibrate IAQ sensor if not calibrated. Will raise IAQ sampling rate to LP until sensor is calibrated."}]
+
+cdefs:
+  BME680_FLOAT_POINT_COMPENSATION: 1
+
+conds:
+  - when: mos.platform == "esp8266"
+    apply:
+      binary_libs:
+        - BSEC_1.4.7.4_Generic_Release/algo/normal_version/bin/esp8266/libalgobsec.a
+  - when: mos.platform == "esp32"
+    apply:
+      binary_libs:
+        - BSEC_1.4.7.4_Generic_Release/algo/normal_version/bin/esp32/libalgobsec.a
+
+manifest_version: 2017-06-29
