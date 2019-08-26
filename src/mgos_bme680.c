@@ -27,7 +27,7 @@
 #include "bsec_interface.h"
 
 #ifndef MGOS_BME680_BSEC_MIN_CAL_CYCLES
-#define MGOS_BME680_BSEC_MIN_CAL_CYCLES 30
+#define MGOS_BME680_BSEC_MIN_CAL_CYCLES 50
 #endif
 
 struct mgos_bme68_state {

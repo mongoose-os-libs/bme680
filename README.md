@@ -76,6 +76,37 @@ enum mgos_app_init_result mgos_app_init(void) {
 }
 ```
 
+Output:
+
+```
+[Aug 26 23:00:59.324] mgos_i2c_gpio_maste:250 I2C GPIO init ok (SDA: 4, SCL: 5, freq: 100000)
+[Aug 26 23:00:59.348] mgos_bme680.c:466       BME680 @ 0/0x77 init ok
+[Aug 26 23:00:59.353] mgos_bme680.c:396       BSEC 1.4.7.4 initialized
+[Aug 26 23:00:59.364] mgos_bme680.c:404       Failed to load BSEC config from bsec_iaq.config: -33, will use defaults
+[Aug 26 23:00:59.377] mgos_bme680.c:414       Failed to load BSEC state from bsec.state: -33, will use defaults
+...
+[Aug 26 23:01:00.337] mgos_init.c:36          Init done, RAM: 51152 total, 41996 free, 42000 min free
+[Aug 26 23:01:00.352] mgos_bme680.c:281       IAQ sensor requires calibration
+[Aug 26 23:01:00.356] main.c:13               0.68 IAQ 25.00 (acc 0) T 27.07 RH 57.51 P 101.76 kPa (763.28 mmHg)
+[Aug 26 23:01:02.641] main.c:13               3.68 IAQ 25.00 (acc 0) T 26.98 RH 57.87 P 101.76 kPa (763.29 mmHg)
+[Aug 26 23:01:05.645] main.c:13               6.69 IAQ 25.00 (acc 0) T 26.99 RH 57.88 P 101.76 kPa (763.28 mmHg)
+[Aug 26 23:01:08.650] main.c:13               9.69 IAQ 25.00 (acc 0) T 27.01 RH 57.84 P 101.76 kPa (763.28 mmHg)
+...
+[Aug 26 23:05:54.095] main.c:13               295.11 IAQ 25.00 (acc 0) T 26.72 RH 58.46 P 101.76 kPa (763.27 mmHg)
+[Aug 26 23:05:56.868] mgos_bme680.c:368       BSEC state saved (bsec.state)
+[Aug 26 23:05:57.100] main.c:13               298.11 IAQ 25.00 (acc 0) T 26.72 RH 58.46 P 101.76 kPa (763.26 mmHg)
+...
+[Aug 26 23:08:12.326] main.c:13               433.32 IAQ 51.91 (acc 1) T 26.70 RH 58.46 P 101.76 kPa (763.25 mmHg)
+[Aug 26 23:08:15.331] main.c:13               436.33 IAQ 250.00 (acc 2) T 26.71 RH 58.41 P 101.76 kPa (763.27 mmHg)
+...
+[Aug 26 23:16:46.136] main.c:13               947.09 IAQ 49.84 (acc 3) T 26.72 RH 58.90 P 101.76 kPa (763.23 mmHg)
+[Aug 26 23:16:49.140] mgos_bme680.c:289       IAQ sensor calibration complete
+[Aug 26 23:16:49.144] main.c:13               950.10 IAQ 50.42 (acc 3) T 26.72 RH 58.92 P 101.76 kPa (763.23 mmHg)
+[Aug 26 23:16:52.145] main.c:13               953.10 IAQ 50.01 (acc 3) T 26.73 RH 58.88 P 101.76 kPa (763.23 mmHg)
+[Aug 26 23:16:55.150] main.c:13               956.10 IAQ 50.95 (acc 3) T 26.73 RH 58.87 P 101.76 kPa (763.23 mmHg)
+...
+```
+
 ## License
 
 See [here](LICENSE.md).
