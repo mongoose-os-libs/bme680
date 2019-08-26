@@ -10,6 +10,10 @@ This library provides the necessary glue code for both to work under Mongoose OS
 
 When sensor output is ready,i an `MGOS_EV_BME680_BSEC_OUTPUT` event is triggered which receives a structure containing sensor outputs (see `struct mgos_bsec_output` definition in [mgos_bme680.h](include/struct mgos_bsec_output)).
 
+### Platform support
+
+Currently only supported on ESP8266 and ESP32 platforms, ARM support is a `TODO`.
+
 ## Quick Start
 
 The library is configured through the `bme680` configuration section, defined [here](mos.yml).
