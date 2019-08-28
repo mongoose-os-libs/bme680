@@ -35,6 +35,7 @@ struct mgos_bme68_state {
   struct bme680_dev dev;
   mgos_timer_id bsec_timer_id;
   mgos_timer_id meas_timer_id;
+  int64_t next_ts;
   int state_save_delay_ms;
   float input_heat_source_value;
   float prev_iaq_sr;
@@ -304,17 +305,7 @@ static void mgos_bsec_meas_timer_cb(void *arg) {
 
 static int mgos_bme680_run_once(int *delay_ms) {
   int8_t bme680_status;
-  int64_t ts;
-  if (s_state->cfg.bsec.use_wall_time) {
-    ts = (int64_t)(mg_time() * 1000000000);
-    if (ts < 1500000000000000000LL) {
-      LOG(LL_ERROR, ("Time is not set, not processing sensor data"));
-      *delay_ms = 3000;
-      return 0;
-    }
-  } else {
-    ts = mgos_uptime_micros() * 1000;
-  }
+  int64_t ts = s_state->next_ts;
   static bsec_bme_settings_t ss = {0};
   bsec_library_return_t ret = bsec_sensor_control(ts, &ss);
   LOG(LL_DEBUG,
@@ -324,6 +315,7 @@ static int mgos_bme680_run_once(int *delay_ms) {
        ss.run_gas, ss.pressure_oversampling, ss.temperature_oversampling,
        ss.humidity_oversampling, ss.trigger_measurement, ss.next_call));
   if (ret != BSEC_OK) return ret;
+  s_state->next_ts = ss.next_call;
   *delay_ms = (ss.next_call - ts) / 1000000;
   if (ss.trigger_measurement) {
     s_state->dev.tph_sett.os_hum = ss.humidity_oversampling;

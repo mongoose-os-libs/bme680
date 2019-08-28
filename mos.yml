@@ -24,7 +24,6 @@ config_schema:
   - ["bme680.bsec.config_file", "s", "bsec_iaq.config", {"title": "BSEC library configuration file name. Binary configuration files from the BSEC library distribution are used. Copy the appropriate file to your app's fs directory."}]
   - ["bme680.bsec.state_file", "s", "bsec.state", {"title": "BSEC state file, stores BSEC library state."}]
   - ["bme680.bsec.state_save_interval", "i", 300, {"title": "Save BSEC library state to file at this interval (seconds)."}]
-  - ["bme680.bsec.use_wall_time", "b", false, {"title": "Use wall time for time stamps, otherwise use uptime."}]
   # Simplified sensor subscription configuration.
   # If either is set, then relevant sensor outputs are requested with the specified rate.
   # If both are not set, then user will need to configure subscription with bsec_update_subscription()
