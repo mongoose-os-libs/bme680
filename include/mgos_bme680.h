@@ -20,7 +20,9 @@
 #include <stdbool.h>
 
 #include "mgos_event.h"
+#include "mgos_sys_config.h"
 
+#include "bme680.h"
 #include "bsec_interface.h"
 
 #define MGOS_EV_BME680_BASE MGOS_EVENT_BASE('B', '6', '8')
@@ -70,7 +72,11 @@ bsec_library_return_t mgos_bsec_set_rh_sample_rate(float sr);
 // requested via bsec_update_subscription();
 bool mgos_bsec_start(void);
 
-// Returns the global instance of the sensor structure.
-// If bme680.bsec.enable is set, this will always return NULL so as not to
-// interfere with the library-driven measurements.
-struct bme680_dev *mgos_bme680_get_global(void);
+// Init BME680 library with specific config.
+// Useful when initialization should be delayed until after application is
+// started.
+bool mgos_bme680_init_cfg(const struct mgos_config_bme680 *cfg);
+
+// Initialize BME680 device on a specific I2C bus at specific address (0x76 or
+// 0x77).
+int8_t mgos_bme68_init_dev_i2c(struct bme680_dev *dev, int bus_no, int addr);

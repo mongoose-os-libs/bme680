@@ -31,6 +31,7 @@
 #endif
 
 struct mgos_bme68_state {
+  struct mgos_config_bme680 cfg;
   struct bme680_dev dev;
   mgos_timer_id bsec_timer_id;
   mgos_timer_id meas_timer_id;
@@ -46,14 +47,16 @@ static void mgos_bsec_timer_cb(void *arg);
 
 static int8_t bme680_i2c_read(uint8_t dev_id, uint8_t reg_addr, uint8_t *data,
                               uint16_t len) {
-  struct mgos_i2c *bus = mgos_i2c_get_bus(mgos_sys_config_get_bme680_i2c_bus());
-  return mgos_i2c_read_reg_n(bus, dev_id, reg_addr, len, data) ? 0 : -1;
+  struct mgos_i2c *bus = mgos_i2c_get_bus(dev_id >> 1);
+  int addr = BME680_I2C_ADDR_PRIMARY + (dev_id & 1);
+  return mgos_i2c_read_reg_n(bus, addr, reg_addr, len, data) ? 0 : -1;
 }
 
 static int8_t bme680_i2c_write(uint8_t dev_id, uint8_t reg_addr, uint8_t *data,
                                uint16_t len) {
-  struct mgos_i2c *bus = mgos_i2c_get_bus(mgos_sys_config_get_bme680_i2c_bus());
-  return mgos_i2c_write_reg_n(bus, dev_id, reg_addr, len, data) ? 0 : -1;
+  struct mgos_i2c *bus = mgos_i2c_get_bus(dev_id >> 1);
+  int addr = BME680_I2C_ADDR_PRIMARY + (dev_id & 1);
+  return mgos_i2c_write_reg_n(bus, addr, reg_addr, len, data) ? 0 : -1;
 }
 
 static void bme680_delay_ms(uint32_t period) {
@@ -172,11 +175,13 @@ bool mgos_bsec_start(void) {
   return true;
 }
 
-struct bme680_dev *mgos_bme680_get_global(void) {
-  if (s_state == NULL || mgos_sys_config_get_bme680_bsec_enable()) {
-    return NULL;
-  }
-  return &s_state->dev;
+int8_t mgos_bme68_init_dev_i2c(struct bme680_dev *dev, int bus_no, int addr) {
+  dev->intf = BME680_I2C_INTF;
+  dev->dev_id = (bus_no << 1) | (addr & 1);
+  dev->read = bme680_i2c_read;
+  dev->write = bme680_i2c_write;
+  dev->delay_ms = bme680_delay_ms;
+  return bme680_init(dev);
 }
 
 static void mgos_bsec_meas_timer_cb(void *arg) {
@@ -273,8 +278,7 @@ static void mgos_bsec_meas_timer_cb(void *arg) {
         break;
     }
   }
-  if (mgos_sys_config_get_bme680_bsec_iaq_auto_cal() &&
-      ev_arg.iaq.time_stamp > 0) {
+  if (s_state->cfg.bsec.iaq_auto_cal && ev_arg.iaq.time_stamp > 0) {
     if (ev_arg.iaq.accuracy < 3 &&
         s_state->iaq_cal_cycles < MGOS_BME680_BSEC_MIN_CAL_CYCLES) {
       if (s_state->iaq_cal_cycles == 0) {
@@ -301,7 +305,7 @@ static void mgos_bsec_meas_timer_cb(void *arg) {
 static int mgos_bme680_run_once(int *delay_ms) {
   int8_t bme680_status;
   int64_t ts;
-  if (mgos_sys_config_get_bme680_bsec_use_wall_time()) {
+  if (s_state->cfg.bsec.use_wall_time) {
     ts = (int64_t)(mg_time() * 1000000000);
     if (ts < 1500000000000000000LL) {
       LOG(LL_ERROR, ("Time is not set, not processing sensor data"));
@@ -361,12 +365,11 @@ static void mgos_bsec_timer_cb(void *arg) {
     LOG(LL_ERROR, ("BSEC run failed: %d", ret));
     delay_ms = 10000;
   }
-  const char *sf = mgos_sys_config_get_bme680_bsec_state_file();
-  if (sf != NULL &&
-      mgos_sys_config_get_bme680_bsec_state_save_interval() >= 0) {
+  const char *sf = s_state->cfg.bsec.state_file;
+  if (sf != NULL && s_state->cfg.bsec.state_save_interval >= 0) {
     s_state->state_save_delay_ms += delay_ms;
     if (s_state->state_save_delay_ms / 1000 >=
-        mgos_sys_config_get_bme680_bsec_state_save_interval()) {
+        s_state->cfg.bsec.state_save_interval) {
       bsec_library_return_t ret = mgos_bsec_save_state_to_file(sf);
       if (ret == BSEC_OK) {
         LOG(LL_INFO, ("BSEC state saved (%s)", sf));
@@ -398,7 +401,7 @@ bool mgos_bme680_bsec_init(void) {
   }
   LOG(LL_INFO, ("BSEC %d.%d.%d.%d initialized", v.major, v.minor,
                 v.major_bugfix, v.minor_bugfix));
-  const char *cf = mgos_sys_config_get_bme680_bsec_config_file();
+  const char *cf = s_state->cfg.bsec.config_file;
   if (cf != NULL) {
     ret = mgos_bsec_set_configuration_from_file(cf);
     if (ret == BSEC_OK) {
@@ -408,7 +411,7 @@ bool mgos_bme680_bsec_init(void) {
                     "config", cf, ret));
     }
   }
-  const char *sf = mgos_sys_config_get_bme680_bsec_state_file();
+  const char *sf = s_state->cfg.bsec.state_file;
   if (sf != NULL) {
     ret = mgos_bsec_set_state_from_file(sf);
     if (ret == BSEC_OK) {
@@ -419,26 +422,25 @@ bool mgos_bme680_bsec_init(void) {
     }
   }
 
-  float iaq_sr = sr_from_str(mgos_sys_config_get_bme680_bsec_iaq_sample_rate());
+  float iaq_sr = sr_from_str(s_state->cfg.bsec.iaq_sample_rate);
   if ((ret = mgos_bsec_set_iaq_sample_rate(iaq_sr)) != BSEC_OK) {
     LOG(LL_ERROR, ("Failed to set %s sample rate: %d", "IAQ", ret));
     return false;
   }
 
-  float temp_sr =
-      sr_from_str(mgos_sys_config_get_bme680_bsec_temp_sample_rate());
+  float temp_sr = sr_from_str(s_state->cfg.bsec.temp_sample_rate);
   if ((ret = mgos_bsec_set_temp_sample_rate(temp_sr)) != BSEC_OK) {
     LOG(LL_ERROR, ("Failed to set %s sample rate: %d", "temp", ret));
     return false;
   }
 
-  float rh_sr = sr_from_str(mgos_sys_config_get_bme680_bsec_rh_sample_rate());
+  float rh_sr = sr_from_str(s_state->cfg.bsec.rh_sample_rate);
   if ((ret = mgos_bsec_set_rh_sample_rate(rh_sr)) != BSEC_OK) {
     LOG(LL_ERROR, ("Failed to set %s sample rate: %d", "RH", ret));
     return false;
   }
 
-  float ps_sr = sr_from_str(mgos_sys_config_get_bme680_bsec_ps_sample_rate());
+  float ps_sr = sr_from_str(s_state->cfg.bsec.ps_sample_rate);
   if ((ret = mgos_bsec_set_ps_sample_rate(ps_sr)) != BSEC_OK) {
     LOG(LL_ERROR, ("Failed to set %s sample rate: %d", "pressure", ret));
     return false;
@@ -453,26 +455,29 @@ bool mgos_bme680_bsec_init(void) {
   return true;
 }
 
-bool mgos_bme680_init(void) {
-  if (!mgos_sys_config_get_bme680_enable()) return true;
+bool mgos_bme680_init_cfg(const struct mgos_config_bme680 *cfg) {
+  if (!cfg->enable) return false;
+
   s_state = (struct mgos_bme68_state *) calloc(1, sizeof(*s_state));
   if (s_state == NULL) return false;
   s_state->prev_iaq_sr = BSEC_SAMPLE_RATE_DISABLED;
-  s_state->dev.intf = BME680_I2C_INTF;
-  s_state->dev.dev_id = mgos_sys_config_get_bme680_i2c_addr();
-  s_state->dev.read = bme680_i2c_read;
-  s_state->dev.write = bme680_i2c_write;
-  s_state->dev.delay_ms = bme680_delay_ms;
-  int8_t bme680_status = bme680_init(&s_state->dev);
-  LOG(LL_INFO,
-      ("BME680 @ %d/0x%x init %s", mgos_sys_config_get_bme680_i2c_bus(),
-       mgos_sys_config_get_bme680_i2c_addr(),
-       (bme680_status == BME680_OK ? "ok" : "failed")));
+  s_state->cfg = *cfg;
+
+  int8_t bme680_status =
+      mgos_bme68_init_dev_i2c(&s_state->dev, cfg->i2c_bus, cfg->i2c_addr);
+
+  LOG(LL_INFO, ("BME680 @ %d/0x%x init %s", cfg->i2c_bus, cfg->i2c_addr,
+                (bme680_status == BME680_OK ? "ok" : "failed")));
   if (bme680_status != BME680_OK) return false;
 
-  if (mgos_sys_config_get_bme680_bsec_enable() && !mgos_bme680_bsec_init()) {
+  if (cfg->bsec.enable && !mgos_bme680_bsec_init()) {
     return false;
   }
 
   return true;
+}
+
+bool mgos_bme680_init(void) {
+  if (!mgos_sys_config_get_bme680_enable()) return true;
+  return mgos_bme680_init_cfg(mgos_sys_config_get_bme680());
 }
