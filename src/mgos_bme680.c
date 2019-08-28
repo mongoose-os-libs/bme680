@@ -278,7 +278,11 @@ static void mgos_bsec_meas_timer_cb(void *arg) {
     if (ev_arg.iaq.accuracy < 3 &&
         s_state->iaq_cal_cycles < MGOS_BME680_BSEC_MIN_CAL_CYCLES) {
       if (s_state->iaq_cal_cycles == 0) {
-        LOG(LL_INFO, ("IAQ sensor requires calibration"));
+        if (ev_arg.iaq.accuracy == 2) {
+          LOG(LL_INFO, ("IAQ sensor is calibrating"));
+        } else {
+          LOG(LL_INFO, ("IAQ sensor needs calibration"));
+        }
         mgos_bsec_set_iaq_sample_rate_int(BSEC_SAMPLE_RATE_LP);
       }
       s_state->iaq_cal_cycles = MGOS_BME680_BSEC_MIN_CAL_CYCLES;
