@@ -311,9 +311,10 @@ static int mgos_bme680_run_once(int *delay_ms) {
   LOG(LL_DEBUG,
       ("BSEC %lld ctl: process 0x%x, ht %u dur %u ms, gas %d, po %d, to %d, ho "
        "%d, tm %d, next %lld",
-       ts, ss.process_data, ss.heater_temperature, ss.heating_duration,
-       ss.run_gas, ss.pressure_oversampling, ss.temperature_oversampling,
-       ss.humidity_oversampling, ss.trigger_measurement, ss.next_call));
+       ts, (unsigned) ss.process_data, ss.heater_temperature,
+       ss.heating_duration, ss.run_gas, ss.pressure_oversampling,
+       ss.temperature_oversampling, ss.humidity_oversampling,
+       ss.trigger_measurement, ss.next_call));
   if (ret != BSEC_OK) return ret;
   s_state->next_ts = ss.next_call;
   *delay_ms = (ss.next_call - ts) / 1000000;
