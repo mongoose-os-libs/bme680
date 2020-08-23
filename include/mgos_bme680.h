@@ -25,6 +25,10 @@
 #include "bme680.h"
 #include "bsec_interface.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MGOS_EV_BME680_BASE MGOS_EVENT_BASE('B', '6', '8')
 enum mgos_bme680_event {
   MGOS_EV_BME680_BSEC_OUTPUT =
@@ -80,3 +84,7 @@ bool mgos_bme680_init_cfg(const struct mgos_config_bme680 *cfg);
 // Initialize BME680 device on a specific I2C bus at specific address (0x76 or
 // 0x77).
 int8_t mgos_bme68_init_dev_i2c(struct bme680_dev *dev, int bus_no, int addr);
+
+#ifdef __cplusplus
+}
+#endif
