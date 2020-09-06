@@ -8,7 +8,7 @@ which provides high-level sensor control to obtain relaible air quality sensor d
 
 This library provides the necessary glue code for both to work under Mongoose OS and a number of helper functions.
 
-When sensor output is ready,i an `MGOS_EV_BME680_BSEC_OUTPUT` event is triggered which receives a structure containing sensor outputs (see `struct mgos_bsec_output` definition in [mgos_bme680.h](include/struct mgos_bsec_output)).
+When sensor output is ready,i an `MGOS_EV_BME680_BSEC_OUTPUT` event is triggered which receives a structure containing sensor outputs (see `struct mgos_bsec_output` definition in [mgos_bme680.h](include/mgos_bme680.h)).
 
 ### Platform support
 
