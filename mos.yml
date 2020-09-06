@@ -47,4 +47,9 @@ conds:
       binary_libs:
         - BSEC_1.4.7.4_Generic_Release/algo/normal_version/bin/esp32/libalgobsec.a
 
+tags:
+  - c
+  - hw
+  - docs:drivers:BME680
+
 manifest_version: 2017-06-29
