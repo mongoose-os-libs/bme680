@@ -12,7 +12,7 @@ includes:
   - BSEC_1.4.7.4_Generic_Release/algo/normal_version/inc
 
 libs:
-  - origin: https://github.com/mongoose-os-libs/i2c
+  - location: https://github.com/mongoose-os-libs/i2c
 
 config_schema:
   - ["bme680", "o", {"title": "BME680 sensor settings"}]
